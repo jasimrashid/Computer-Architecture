@@ -6,6 +6,8 @@ op_LDI = 0b10000010
 op_PRN = 0b01000111
 op_HLT = 0b00000001
 op_MUL = 0b10100010
+op_PUSH = 0b01000101
+op_POP = 0b01000110
 
 
 class CPU:
@@ -16,13 +18,19 @@ class CPU:
         self.pc = None #PROGRAM COUNTER
         ir = None
         self.ram = [None] * 256
-        self.reg = [None] * 256
+        self.reg = [None] * 8
+        IM = 5
+        IS = 6
+        self.SP = 7
+        self.reg[self.SP] = 0xF4 #Initialie SP
         self.running = None #TODO refactor
         self.branchtable = {}
         self.branchtable[op_LDI] = self.ldi
         self.branchtable[op_PRN] = self.prn
         self.branchtable[op_HLT] = self.hlt
         self.branchtable[op_MUL] = self.mul
+        self.branchtable[op_PUSH] = self.push
+        self.branchtable[op_POP] = self.pop
         
         # #REGISTERS OPT A
         # for i in range(256):
@@ -105,8 +113,6 @@ class CPU:
 
         print(f"TRACE: %02X | %02X %02X %02X |" % (
             self.pc,
-            #self.fl,
-            #self.ie,
             self.ram_read(self.pc),
             self.ram_read(self.pc + 1),
             self.ram_read(self.pc + 2)
@@ -132,6 +138,26 @@ class CPU:
         self.reg[self.ram_read(self.pc + 1)] = self.reg[self.ram_read(self.pc+1)]*self.reg[self.ram_read(self.pc+2)]
         self.pc += 3
 
+    def push(self):
+        # decrement SP
+        # breakpoint()
+        self.reg[self.SP] -= 1
+        #value to push
+        value = self.reg[self.ram[self.pc+1]]
+        #push value to slot
+        self.ram_write(address = self.reg[self.SP], value=value )
+        self.pc += 2
+
+    def pop(self):
+        # pop value from top of stack / @SP
+        value = self.ram[self.reg[self.SP]]
+        # assign value to register at PC+1
+        self.reg[self.ram[self.pc + 1]] = value
+
+        # increment SP and PC
+        self.reg[self.SP] += 1
+        self.pc += 2
+
     def run(self): #TODO
         """Run the CPU."""
         self.running = True
@@ -145,27 +171,6 @@ class CPU:
                 # breakpoint()
             except Exception:
                 print(f"Unknown instruction")
-
-            # if ir == 0b10000010: #LDI                
-            #     self.reg[self.ram_read(address = self.pc + 1)] = self.ram_read(address=self.pc+2)
-            #     self.pc += 3
-
-            # elif ir ==  0b01000111: #PRN
-            #     print(self.reg[self.ram_read(self.pc + 1)])
-            #     self.pc += 2
-
-            # elif ir == 0b00000001: #HLT
-            #     running = False
-
-            # elif ir == 0b10100010: #MUL
-            #     self.reg[self.ram_read(self.pc + 1)] = self.reg[self.ram_read(self.pc+1)]*self.reg[self.ram_read(self.pc+2)]
-            #     self.pc += 3
-
-            # else:
-            #     print(f"Unknown instruction")
-
-
-
 
 
 
