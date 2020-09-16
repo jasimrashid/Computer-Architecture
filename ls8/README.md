@@ -65,6 +65,17 @@ but you'll have to implement those three above instructions first!
 * Read this whole file.
 * Skim the spec.
 
+
+* Inventory of Files
+* ls8.py - main function. instantiates CPU object, loads(.load()) and runs it(.run()). 
+* cpu.py. has following functions
+- load - loads a program into memory
+- alu - ALU operations
+- trace - prints out the CPU state
+- run - run the CPU
+- ram_read - accepts address to read and return value stored there
+- ram_write - accdept a value to write and address to write it to
+
 ## Step 1: Add the constructor to `cpu.py`
 
 Add list properties to the `CPU` class to hold 256 bytes of memory and 8

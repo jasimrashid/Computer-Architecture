@@ -5,17 +5,21 @@ import sys
 class CPU:
     """Main CPU class."""
 
-    def __init__(self):
+    def __init__(self): #TODO
         """Construct a new CPU."""
-        pass
+        self.pc = None #PROGRAM COUNTER
+        ir = None
+        self.ram = [None] * 256
+        self.reg = [None] * 256
+        
+        # #REGISTERS OPT A
+        # for i in range(256):
+        #     reg[i] = [0]*8
 
-    def load(self):
-        """Load a program into memory."""
+        #REGISTERS OPT B
+        self.reg = [0] * 256
 
-        address = 0
-
-        # For now, we've just hardcoded a program:
-
+    def load_hardcoded(self):
         program = [
             # From print8.ls8
             0b10000010, # LDI R0,8
@@ -30,6 +34,47 @@ class CPU:
             self.ram[address] = instruction
             address += 1
 
+    
+    def load(self, load_file):
+        """Load a program into memory."""
+
+        address = 0
+
+        # For now, we've just hardcoded a program:
+
+
+        # if len(sys.argv) != 2:
+        #     print('usage: compy.py filename')
+        #     sys.exit(1)
+
+        try:
+            address = 0
+
+            # with open(sys.argv[1]) as f:
+            with open(load_file) as f:
+                for line in f:
+                    t = line.split('#')
+                    n = t[0].strip()
+
+                    if n == '':
+                        continue
+
+                    try:
+                        n = int(n,2)
+                    except ValueError:
+                        print(f"Invalid number '{n}''")
+                        sys.exit(1)
+
+                    self.ram[address] = n
+                    address += 1
+
+        except FileNotFoundError:
+            print(f"File not found: '{load_file}'")
+            sys.exit(2)
+
+        # breakpoint()
+
+    
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
@@ -60,6 +105,42 @@ class CPU:
 
         print()
 
-    def run(self):
+    def run(self): #TODO
         """Run the CPU."""
-        pass
+        running = True
+        self.pc = 0
+
+        while running:
+            ir = self.ram[self.pc]
+
+            if ir == 0b10000010: #LDI                
+                self.reg[self.ram_read(address = self.pc + 1)] = self.ram_read(address=self.pc+2)
+                self.pc += 3
+
+            elif ir ==  0b01000111: #PRN
+                print(self.reg[self.ram_read(self.pc + 1)])
+                self.pc += 2
+
+            elif ir == 0b00000001: #HLT
+                running = False
+
+            elif ir == 0b10100010: #MUL
+                self.reg[self.ram_read(self.pc + 1)] = self.reg[self.ram_read(self.pc+1)]*self.reg[self.ram_read(self.pc+2)]
+                self.pc += 3
+
+            else:
+                print(f"Unknown instruction")
+
+
+    def ram_read(self, address): #TODO
+        """ 
+        should accept the address to read and return the value stored there.
+        """
+        if  0 <= address <= 255:
+            return self.ram[address]
+        else:
+            print('Invalid address')
+            return None
+
+    def ram_write(self, address,value): #TODO
+        self.ram[address] = value
