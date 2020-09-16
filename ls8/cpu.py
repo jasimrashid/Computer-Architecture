@@ -2,6 +2,12 @@
 
 import sys
 
+op_LDI = 0b10000010
+op_PRN = 0b01000111
+op_HLT = 0b00000001
+op_MUL = 0b10100010
+
+
 class CPU:
     """Main CPU class."""
 
@@ -11,6 +17,12 @@ class CPU:
         ir = None
         self.ram = [None] * 256
         self.reg = [None] * 256
+        self.running = None #TODO refactor
+        self.branchtable = {}
+        self.branchtable[op_LDI] = self.ldi
+        self.branchtable[op_PRN] = self.prn
+        self.branchtable[op_HLT] = self.hlt
+        self.branchtable[op_MUL] = self.mul
         
         # #REGISTERS OPT A
         # for i in range(256):
@@ -105,31 +117,56 @@ class CPU:
 
         print()
 
+    def ldi(self):
+        self.reg[self.ram_read(address = self.pc + 1)] = self.ram_read(address=self.pc+2)
+        self.pc += 3
+
+    def prn(self):
+        print(self.reg[self.ram_read(self.pc + 1)])
+        self.pc += 2
+
+    def hlt(self):
+        self.running = False
+
+    def mul(self):
+        self.reg[self.ram_read(self.pc + 1)] = self.reg[self.ram_read(self.pc+1)]*self.reg[self.ram_read(self.pc+2)]
+        self.pc += 3
+
     def run(self): #TODO
         """Run the CPU."""
-        running = True
+        self.running = True
         self.pc = 0
 
-        while running:
+        while self.running:
             ir = self.ram[self.pc]
 
-            if ir == 0b10000010: #LDI                
-                self.reg[self.ram_read(address = self.pc + 1)] = self.ram_read(address=self.pc+2)
-                self.pc += 3
-
-            elif ir ==  0b01000111: #PRN
-                print(self.reg[self.ram_read(self.pc + 1)])
-                self.pc += 2
-
-            elif ir == 0b00000001: #HLT
-                running = False
-
-            elif ir == 0b10100010: #MUL
-                self.reg[self.ram_read(self.pc + 1)] = self.reg[self.ram_read(self.pc+1)]*self.reg[self.ram_read(self.pc+2)]
-                self.pc += 3
-
-            else:
+            try:
+                self.branchtable[ir]()
+                # breakpoint()
+            except Exception:
                 print(f"Unknown instruction")
+
+            # if ir == 0b10000010: #LDI                
+            #     self.reg[self.ram_read(address = self.pc + 1)] = self.ram_read(address=self.pc+2)
+            #     self.pc += 3
+
+            # elif ir ==  0b01000111: #PRN
+            #     print(self.reg[self.ram_read(self.pc + 1)])
+            #     self.pc += 2
+
+            # elif ir == 0b00000001: #HLT
+            #     running = False
+
+            # elif ir == 0b10100010: #MUL
+            #     self.reg[self.ram_read(self.pc + 1)] = self.reg[self.ram_read(self.pc+1)]*self.reg[self.ram_read(self.pc+2)]
+            #     self.pc += 3
+
+            # else:
+            #     print(f"Unknown instruction")
+
+
+
+
 
 
     def ram_read(self, address): #TODO
