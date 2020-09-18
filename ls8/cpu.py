@@ -2,12 +2,16 @@
 
 import sys
 
+#TODO: use 
 op_LDI = 0b10000010
 op_PRN = 0b01000111
 op_HLT = 0b00000001
 op_MUL = 0b10100010
+op_ADD = 0b10100000
 op_PUSH = 0b01000101
 op_POP = 0b01000110
+op_CALL = 0b01010000
+op_RET = 0b00010001
 
 
 class CPU:
@@ -28,16 +32,13 @@ class CPU:
         self.branchtable[op_LDI] = self.ldi
         self.branchtable[op_PRN] = self.prn
         self.branchtable[op_HLT] = self.hlt
+        self.branchtable[op_ADD] = self.add
         self.branchtable[op_MUL] = self.mul
         self.branchtable[op_PUSH] = self.push
         self.branchtable[op_POP] = self.pop
+        self.branchtable[op_CALL] = self.call
+        self.branchtable[op_RET] = self.ret
         
-        # #REGISTERS OPT A
-        # for i in range(256):
-        #     reg[i] = [0]*8
-
-        #REGISTERS OPT B
-        self.reg = [0] * 256
 
     def load_hardcoded(self):
         program = [
@@ -94,6 +95,25 @@ class CPU:
 
         # breakpoint()
 
+    def call(self):
+        # goto line in current step minus 2
+
+        # store pc + 2 in stack to return later
+        self.ram_write(self.reg[self.SP],self.pc+2)
+
+        # get addy from register corresponding to PC+1
+        self.pc = self.reg[self.ram_read(self.pc+1)]
+
+        
+    def ret(self):
+        # pop and goto addy from stack, setting pc to that addy 
+        # return_addy = self.ram_read(self.reg[self.SP])
+        # breakpoint()
+        self.pc = self.ram_read(self.reg[self.SP])
+
+        #incremeent stack pointer
+        self.reg[self.SP] += 1
+
     
 
     def alu(self, op, reg_a, reg_b):
@@ -101,9 +121,11 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+        elif op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
+        
 
     def trace(self):
         """
@@ -135,7 +157,18 @@ class CPU:
         self.running = False
 
     def mul(self):
-        self.reg[self.ram_read(self.pc + 1)] = self.reg[self.ram_read(self.pc+1)]*self.reg[self.ram_read(self.pc+2)]
+        # self.reg[self.ram_read(self.pc + 1)] = self.reg[self.ram_read(self.pc+1)]*self.reg[self.ram_read(self.pc+2)]
+        # self.pc += 3
+
+        self.alu('MUL',self.ram.read(self.pc+1),self.ram.read(self.pc+2))
+        self.pc += 3
+
+    def add(self):
+        # self.reg[self.ram_read(self.pc + 1)] = self.reg[self.ram_read(self.pc+1)]*self.reg[self.ram_read(self.pc+2)]
+        # self.pc += 3
+        # print('hey')
+        # breakpoint()
+        self.alu('ADD',self.ram_read(self.pc+1),self.ram_read(self.pc+2))
         self.pc += 3
 
     def push(self):
@@ -171,6 +204,7 @@ class CPU:
                 # breakpoint()
             except Exception:
                 print(f"Unknown instruction")
+                breakpoint()
 
 
 
